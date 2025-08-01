@@ -114,9 +114,21 @@ Press Ctrl+C to stop the conversation
 
 ```
 grokparty/
-├── main.py           # Main application
-├── requirements.txt  # Python dependencies
-└── README.md        # This file
+├── main.py              # Simplified entry point
+├── requirements.txt     # Python dependencies
+├── README.md           # This file
+├── __init__.py         # Package initialization
+├── app.py              # Main application class
+├── core/               # Core functionality
+│   ├── __init__.py     # Core module initialization
+│   └── grok_api.py    # Grok API communication
+├── models/             # Data models
+│   ├── __init__.py     # Models module initialization
+│   ├── character.py    # Character model
+│   └── conversation.py # Conversation model
+└── cli/                # Command line interface
+    ├── __init__.py     # CLI module initialization
+    └── cli.py         # Command line argument parsing and main function
 ```
 
 ## Requirements
