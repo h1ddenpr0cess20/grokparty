@@ -2,6 +2,7 @@ import asyncio
 import contextlib
 import json
 import os
+import sys
 from datetime import datetime
 from typing import List
 from rich.console import Console
@@ -12,6 +13,26 @@ from grokparty.models.character import Character
 from grokparty.models.conversation import Conversation
 
 console = Console(width=120)
+
+# -- Utility -------------------------------------------------------
+try:
+    import termios
+    import tty
+
+    def _getch() -> str:
+        """Read a single character without requiring Enter (POSIX)."""
+        fd = sys.stdin.fileno()
+        old = termios.tcgetattr(fd)
+        try:
+            tty.setraw(fd)
+            return sys.stdin.read(1)
+        finally:
+            termios.tcsetattr(fd, termios.TCSADRAIN, old)
+except ImportError:  # Windows fallback
+    import msvcrt
+
+    def _getch() -> str:  # type: ignore
+        return msvcrt.getch().decode()
 
 class GrokParty:
     """Main application class"""
@@ -149,14 +170,13 @@ Choose your characters, set the scene, and watch them interact in real-time!
         return characters
 
     async def command_listener(self):
-        """Listen for user commands during the conversation"""
+        """Listen for single-key commands during the conversation"""
         console.print("[dim]Commands: (p)ause/(r)esume, (s)top, (e)xport[/dim]")
         loop = asyncio.get_event_loop()
         while self.conversation and self.conversation.is_active:
             try:
-                cmd = await loop.run_in_executor(None, input, "")
-            except EOFError:
-                # Input stream closed
+                cmd = await loop.run_in_executor(None, _getch)
+            except Exception:
                 break
             cmd = cmd.strip().lower()
             if cmd in ("p", "pause", "r", "resume"):

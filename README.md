@@ -65,9 +65,9 @@ python main.py
 
 ## Controls
 
-- **p**: Pause or resume the conversation
-- **s**: Stop the conversation
-- **e**: Export the conversation history as JSON
+- **p**: Pause or resume the conversation (no Enter needed)
+- **s**: Stop the conversation (no Enter needed)
+- **e**: Export the conversation history as JSON (no Enter needed)
 - **Ctrl+C**: Quit immediately
 - **New Conversation**: Start fresh with new parameters
 
@@ -109,7 +109,7 @@ Describe character 3's personality [Character 3]: A pragmatic engineer
 Select model for A pragmatic engineer (1-5) [1]: 3
 
 Starting conversation...
-Type 'p' to pause, 's' to stop, 'e' to export or Ctrl+C to quit
+Press 'p' to pause, 's' to stop, 'e' to export or Ctrl+C to quit
 ```
 
 ## File Structure
