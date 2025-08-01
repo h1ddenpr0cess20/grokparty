@@ -357,19 +357,18 @@ Choose your characters, set the scene, and watch them interact in real-time!
         """Create character list"""
         characters = []
         
-        # Get number of characters (2-4)
+        # Get number of characters (minimum 2)
         while True:
             try:
-                num_chars = int(Prompt.ask("How many characters? (2-4)", default="2"))
-                if 2 <= num_chars <= 4:
+                num_chars = int(Prompt.ask("How many characters? (minimum 2)", default="2"))
+                if num_chars >= 2:
                     break
                 else:
-                    console.print("[red]Please enter a number between 2 and 4.[/red]")
+                    console.print("[red]Please enter a number 2 or greater.[/red]")
             except ValueError:
                 console.print("[red]Please enter a valid number.[/red]")
         
         console.print(f"\n[bold]Creating {num_chars} characters:[/bold]")
-        
         for i in range(num_chars):
             console.print(f"\n[bold]Character {i + 1}:[/bold]")
             
