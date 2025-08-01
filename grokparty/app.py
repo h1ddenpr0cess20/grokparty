@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import json
 import os
 from datetime import datetime
@@ -146,16 +147,45 @@ Choose your characters, set the scene, and watch them interact in real-time!
             console.print(f"[{color}]✓ {personality} created with {self.grok_api.models[model_choice-1]['name']}[/{color}]")
         
         return characters
+
+    async def command_listener(self):
+        """Listen for user commands during the conversation"""
+        console.print("[dim]Commands: (p)ause/(r)esume, (s)top, (e)xport[/dim]")
+        loop = asyncio.get_event_loop()
+        while self.conversation and self.conversation.is_active:
+            try:
+                cmd = await loop.run_in_executor(None, input, "")
+            except EOFError:
+                # Input stream closed
+                break
+            cmd = cmd.strip().lower()
+            if cmd in ("p", "pause", "r", "resume"):
+                if self.conversation.is_paused:
+                    self.conversation.resume()
+                else:
+                    self.conversation.pause()
+            elif cmd in ("s", "stop"):
+                self.conversation.stop()
+                break
+            elif cmd in ("e", "export"):
+                self.export_conversation()
     
     async def run_conversation(self):
         """Run the main conversation"""
         try:
             await self.conversation.start(self.grok_api)
-            
-            # Keep the conversation running until manually stopped
-            console.print("\n[dim]Conversation is running. Press Ctrl+C to stop.[/dim]")
+
+            console.print(
+                "\n[dim]Conversation is running. Use commands below or Ctrl+C to exit.[/dim]"
+            )
+            listener = asyncio.create_task(self.command_listener())
+
             while self.conversation.is_active:
                 await asyncio.sleep(1)
+
+            listener.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await listener
                 
         except KeyboardInterrupt:
             console.print("\n[yellow]Conversation interrupted by user.[/yellow]")
@@ -225,7 +255,7 @@ Choose your characters, set the scene, and watch them interact in real-time!
                 )
                 
                 console.print("\n[bold green]Starting conversation...[/bold green]")
-                console.print("[dim]Press Ctrl+C to stop the conversation[/dim]\n")
+                console.print("[dim]Type 'p' to pause, 's' to stop, 'e' to export or Ctrl+C to quit[/dim]\n")
                 
                 # Run conversation
                 await self.run_conversation()

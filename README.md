@@ -65,8 +65,10 @@ python main.py
 
 ## Controls
 
-- **Ctrl+C**: Stop the current conversation
-- **Export**: Save conversation history as JSON
+- **p**: Pause or resume the conversation
+- **s**: Stop the conversation
+- **e**: Export the conversation history as JSON
+- **Ctrl+C**: Quit immediately
 - **New Conversation**: Start fresh with new parameters
 
 ## Example Usage
@@ -107,7 +109,7 @@ Describe character 3's personality [Character 3]: A pragmatic engineer
 Select model for A pragmatic engineer (1-5) [1]: 3
 
 Starting conversation...
-Press Ctrl+C to stop the conversation
+Type 'p' to pause, 's' to stop, 'e' to export or Ctrl+C to quit
 ```
 
 ## File Structure
