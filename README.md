@@ -57,11 +57,11 @@ python main.py
 
 ### Available Grok Models
 
-- **Grok 4**: Latest flagship model
-- **Grok 3 Mini**: Efficient next-generation model
-- **Grok 3 Fast**: High-speed processing model
-- **Grok 3 Mini Fast**: Optimized for speed and efficiency
-- **Grok 3**: Advanced conversational model
+- **Grok 4**
+- **Grok 3 Mini**
+- **Grok 3 Fast**
+- **Grok 3 Mini Fast**
+- **Grok 3**
 
 ## Controls
 

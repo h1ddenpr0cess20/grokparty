@@ -10,7 +10,7 @@ from grokparty.core.grok_api import GrokAPI
 from grokparty.models.character import Character
 from grokparty.models.conversation import Conversation
 
-console = Console(width=120)
+console = Console(width=120, highlight=False)
 
 class GrokParty:
     """Main application class"""
@@ -23,9 +23,7 @@ class GrokParty:
     def display_welcome(self):
         """Display welcome message"""
         welcome_text = """
-# 🤖 Welcome to GrokParty! 
-
-**Create conversations between AI characters powered by Grok models.**
+🤖 Welcome to GrokParty! 
 
 Choose your characters, set the scene, and watch them interact in real-time!
         """
@@ -76,15 +74,15 @@ Choose your characters, set the scene, and watch them interact in real-time!
     
     def get_topic_and_setting(self) -> tuple:
         """Get conversation topic and setting"""
-        topic = Prompt.ask("What should they talk about?", default="anything interesting")
-        setting = Prompt.ask("Where is this conversation taking place?", default="a comfortable room")
+        topic = Prompt.ask("What should they talk about?", default="anything")
+        setting = Prompt.ask("Where is this conversation taking place?", default="anywhere")
         return topic, setting
     
     def select_models(self) -> str:
         """Select models for characters and decision making"""
-        console.print("\n[bold]Available Grok models:[/bold]")
-        for i, model in enumerate(self.grok_api.models, 1):
-            console.print(f"  {i}. {model['name']} - {model['description']}")
+        console.print("\n[bold]Available models:[/bold]")
+        for i, model in enumerate(self.grok_api.models, 1): 
+            console.print(f"  {i}. {model['name']}")
         
         # Select decision model
         while True:
@@ -147,15 +145,57 @@ Choose your characters, set the scene, and watch them interact in real-time!
         
         return characters
     
+    async def _listen_for_commands(self):
+        """Listen for keyboard commands in a separate task"""
+        while self.conversation.is_active:
+            try:
+                # Use run_in_executor to call msvcrt functions without blocking the event loop
+                has_key = await asyncio.get_event_loop().run_in_executor(None, self._check_for_key)
+                if has_key:
+                    key = await asyncio.get_event_loop().run_in_executor(None, self._get_key)
+                    key = key.lower()
+                    
+                    if key == b'p' or key == 'p':  # Handle both bytes and string
+                        if self.conversation.is_paused:
+                            self.conversation.resume()
+                        else:
+                            self.conversation.pause()
+                    elif key == b's' or key == 's':  # Handle both bytes and string
+                        self.conversation.stop()
+                        console.print("\n[red]Stopping conversation...[/red]")
+                        return
+            except Exception:
+                # If msvcrt is not available, continue with brief sleep
+                pass
+                
+            # Small delay to prevent excessive CPU usage
+            await asyncio.sleep(0.1)
+    
     async def run_conversation(self):
-        """Run the main conversation"""
+        """Run the main conversation with interactive controls"""
         try:
-            await self.conversation.start(self.grok_api)
+            # Start conversation and command listener as concurrent tasks
+            conversation_task = asyncio.create_task(self.conversation.start(self.grok_api))
+            command_task = asyncio.create_task(self._listen_for_commands())
             
-            # Keep the conversation running until manually stopped
-            console.print("\n[dim]Conversation is running. Press Ctrl+C to stop.[/dim]")
-            while self.conversation.is_active:
-                await asyncio.sleep(1)
+            
+            # Wait for either task to complete
+            done, pending = await asyncio.wait(
+                [conversation_task, command_task],
+                return_when=asyncio.FIRST_COMPLETED
+            )
+            
+            # Cancel any pending tasks
+            for task in pending:
+                task.cancel()
+                try:
+                    await task
+                except asyncio.CancelledError:
+                    pass
+                    
+            # Wait for conversation task to complete if it's still running
+            if not conversation_task.done():
+                await conversation_task
                 
         except KeyboardInterrupt:
             console.print("\n[yellow]Conversation interrupted by user.[/yellow]")
@@ -203,6 +243,22 @@ Choose your characters, set the scene, and watch them interact in real-time!
         except Exception as e:
             console.print(f"[red]Error exporting conversation: {e}[/red]")
     
+    def _check_for_key(self):
+        """Check if a key has been pressed (non-blocking)"""
+        try:
+            import msvcrt
+            return msvcrt.kbhit()
+        except ImportError:
+            return False
+
+    def _get_key(self):
+        """Get the pressed key"""
+        try:
+            import msvcrt
+            return msvcrt.getch()
+        except ImportError:
+            return ''
+            
     async def main(self):
         """Main application loop"""
         self.display_welcome()
@@ -212,38 +268,31 @@ Choose your characters, set the scene, and watch them interact in real-time!
             return
         
         while True:
-            try:
-                # Get conversation parameters
-                conversation_type = self.select_conversation_type()
-                topic, setting = self.get_topic_and_setting()
-                decision_model = self.select_models()
-                characters = self.create_characters(decision_model)
-                
-                # Create conversation
-                self.conversation = Conversation(
-                    conversation_type, topic, setting, characters, decision_model
-                )
-                
-                console.print("\n[bold green]Starting conversation...[/bold green]")
-                console.print("[dim]Press Ctrl+C to stop the conversation[/dim]\n")
-                
-                # Run conversation
-                await self.run_conversation()
-                
-                # Ask if user wants to export
-                if Confirm.ask("\nWould you like to export this conversation?"):
-                    self.export_conversation()
-                
-                # Ask if user wants to start another conversation
-                if not Confirm.ask("\nWould you like to start another conversation?"):
-                    break
-                
-                console.print("\n" + "="*50 + "\n")
-                
-            except KeyboardInterrupt:
-                console.print("\n[yellow]Goodbye![/yellow]")
+            # Get conversation parameters
+            conversation_type = self.select_conversation_type()
+            topic, setting = self.get_topic_and_setting()
+            decision_model = self.select_models()
+            characters = self.create_characters(decision_model)
+            
+            # Create conversation
+            self.conversation = Conversation(
+                conversation_type, topic, setting, characters, decision_model
+            )
+            
+            console.print("\n[bold green]Starting conversation...[/bold green]")
+            console.print("[dim]Press 'p' to pause/resume, 's' to stop[/dim]\n")
+            
+            # Run conversation
+            await self.run_conversation()
+            
+            # Ask if user wants to export
+            if Confirm.ask("\nWould you like to export this conversation?"):
+                self.export_conversation()
+            
+            # Ask if user wants to start another conversation
+            if not Confirm.ask("\nWould you like to start another conversation?"):
                 break
-            except Exception as e:
-                console.print(f"\n[red]An error occurred: {e}[/red]")
-                if not Confirm.ask("Would you like to try again?"):
-                    break
+            
+            console.print("\n" + "="*50 + "\n")
+            
+        console.print("\n[yellow]Goodbye![/yellow]")

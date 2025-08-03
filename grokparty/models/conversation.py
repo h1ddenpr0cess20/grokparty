@@ -95,11 +95,22 @@ class Conversation:
     async def _continue_conversation(self, grok_api):
         """Continue the conversation loop"""
         try:
-            while self.is_active and not self.is_paused:
-                await asyncio.sleep(2)  # Brief pause between messages
+            while self.is_active:
+                # Check if paused - wait in short intervals to remain responsive
+                while self.is_paused and self.is_active:
+                    await asyncio.sleep(0.1)  # Check every 100ms for better responsiveness
                 
-                if not self.is_active or self.is_paused:
+                if not self.is_active:
                     break
+                
+                # Brief pause between messages
+                await asyncio.sleep(2)
+                
+                # Check states again after sleep
+                if not self.is_active:
+                    break
+                if self.is_paused:
+                    continue
                 
                 # Determine next speaker
                 next_speaker = await self.determine_next_speaker(grok_api)
