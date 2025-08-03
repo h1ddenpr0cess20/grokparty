@@ -7,7 +7,7 @@ from rich.text import Text
 from rich.table import Table
 from grokparty.models.character import Character
 
-console = Console(width=120)
+console = Console(width=120, highlight=False)
 
 class Conversation:
     """Manages the conversation flow"""
@@ -22,6 +22,7 @@ class Conversation:
         self.is_active = False
         self.is_paused = False
         self.current_speaker = None
+
     
     async def determine_next_speaker(self, grok_api) -> Character:
         """Determine who should speak next"""
@@ -51,7 +52,7 @@ class Conversation:
         }]
         
         try:
-            response = await grok_api.send_request(self.decision_model, messages, temperature=0.3)
+            response = await grok_api.send_request(self.decision_model, messages, temperature=0.3, disable_search=True)
             speaker_name = response.split('|')[0].strip()
             
             # Find the character by name
@@ -62,7 +63,6 @@ class Conversation:
             console.print(f"[red]Error determining next speaker: {e}[/red]")
         
         # Fallback to random selection
-        import random
         return random.choice(self.characters)
     
     async def start(self, grok_api):
@@ -70,60 +70,46 @@ class Conversation:
         self.is_active = True
         self.is_paused = False
         
-        # Display conversation info
         self._display_conversation_info()
-        
-        # Choose random first speaker
-        import random
+
         self.current_speaker = random.choice(self.characters)
         
-        # Create intro prompt
         other_participants = [c.personality for c in self.characters if c != self.current_speaker]
         intro = f"start a {self.conversation_type} about {self.topic} with {', '.join(other_participants)}. the setting is {self.setting}."
         
-        # Get first response
         with console.status(f"[{self.current_speaker.color}]{self.current_speaker.personality}[/{self.current_speaker.color}] is thinking..."):
             message = await self.current_speaker.respond(grok_api, intro, self.conversation_type, self.topic, self.setting)
         
-        # Add to history and display
         self.history.append(f"{self.current_speaker.personality}: {message}")
         self._display_message(self.current_speaker, message)
         
-        # Continue conversation
         await self._continue_conversation(grok_api)
     
     async def _continue_conversation(self, grok_api):
         """Continue the conversation loop"""
         try:
             while self.is_active:
-                # Check if paused - wait in short intervals to remain responsive
                 while self.is_paused and self.is_active:
                     await asyncio.sleep(0.1)  # Check every 100ms for better responsiveness
                 
                 if not self.is_active:
                     break
                 
-                # Brief pause between messages
                 await asyncio.sleep(2)
                 
-                # Check states again after sleep
                 if not self.is_active:
                     break
                 if self.is_paused:
                     continue
                 
-                # Determine next speaker
                 next_speaker = await self.determine_next_speaker(grok_api)
                 
-                # Get response
                 history_string = "\n".join(self.history)
                 with console.status(f"[{next_speaker.color}]{next_speaker.personality}[/{next_speaker.color}] is thinking..."):
                     message = await next_speaker.respond(grok_api, history_string, self.conversation_type, self.topic, self.setting)
                 
-                # Update current speaker
                 self.current_speaker = next_speaker
                 
-                # Add to history and display
                 self.history.append(f"{next_speaker.personality}: {message}")
                 self._display_message(next_speaker, message)
         except Exception as e:
@@ -150,7 +136,6 @@ class Conversation:
     
     def _display_message(self, character: Character, message: str):
         """Display a message from a character"""
-        # Create a panel with the character's message
         message_panel = Panel(
             message,
             title=f"[{character.color}]{character.personality}[/{character.color}]",

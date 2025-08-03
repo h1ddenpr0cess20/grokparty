@@ -41,4 +41,4 @@ class Character:
     async def respond(self, grok_api: GrokAPI, history: str, conversation_type: str, topic: str, setting: str) -> str:
         """Generate a response from this character"""
         messages = self.create_prompt(history, conversation_type, topic, setting)
-        return await grok_api.send_request(self.model, messages)
+        return await grok_api.send_request(self.model, messages, disable_search=False)
