@@ -16,30 +16,30 @@ class GrokAPI:
     {"id": "grok-3", "name": "Grok 3"}
         ]
     
-    async def send_request(self, model: str, messages: List[Dict], temperature: float = 0.8) -> str:
+    async def send_request(self, model: str, messages: List[Dict], temperature: float = 0.8, disable_search: bool = False) -> str:
         """Send a request to Grok API"""
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
         }
-        
-        payload = {
-            "model": model,
-            "messages": messages,
-            "search_parameters": {
+        search_params = {
                 "mode": "auto",
                 "return_citations": True,
                 "max_search_results": 10,
                 "sources": [
-                    {"type": "web", "safe_search": True, "country": "us"},
-                    {"type": "news", "safe_search": True, "country": "us"},
+                    {"type": "web", "country": "us"},
+                    {"type": "news", "country": "us"},
                     {"type": "x"}
                 ]
-            },
+            } if not disable_search else None
+        
+        payload = {
+            "model": model,
+            "messages": messages,
+            "search_parameters": search_params,
             "temperature": temperature,
             "stream": False
         }
-        
         async with aiohttp.ClientSession() as session:
             async with session.post(
                 f"{self.base_url}/chat/completions",
