@@ -9,11 +9,11 @@ class GrokAPI:
         self.api_key = api_key
         self.base_url = "https://api.x.ai/v1"
         self.models = [
-            {"id": "grok-4", "name": "Grok 4", "description": "Latest flagship model"},
-            {"id": "grok-3-mini", "name": "Grok 3 Mini", "description": "Efficient next-generation model"},
-            {"id": "grok-3-fast", "name": "Grok 3 Fast", "description": "High-speed processing model"},
-            {"id": "grok-3-mini-fast", "name": "Grok 3 Mini Fast", "description": "Optimized for speed and efficiency"},
-            {"id": "grok-3", "name": "Grok 3", "description": "Advanced conversational model"}
+    {"id": "grok-4", "name": "Grok 4"},
+    {"id": "grok-3-mini", "name": "Grok 3 Mini"},
+    {"id": "grok-3-fast", "name": "Grok 3 Fast"},
+    {"id": "grok-3-mini-fast", "name": "Grok 3 Mini Fast"},
+    {"id": "grok-3", "name": "Grok 3"}
         ]
     
     async def send_request(self, model: str, messages: List[Dict], temperature: float = 0.8) -> str:
@@ -26,6 +26,16 @@ class GrokAPI:
         payload = {
             "model": model,
             "messages": messages,
+            "search_parameters": {
+                "mode": "auto",
+                "return_citations": True,
+                "max_search_results": 10,
+                "sources": [
+                    {"type": "web", "safe_search": True, "country": "us"},
+                    {"type": "news", "safe_search": True, "country": "us"},
+                    {"type": "x"}
+                ]
+            },
             "temperature": temperature,
             "stream": False
         }
