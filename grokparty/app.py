@@ -147,15 +147,59 @@ Choose your characters, set the scene, and watch them interact in real-time!
         
         return characters
     
+    async def _listen_for_commands(self):
+        """Listen for keyboard commands in a separate task"""
+        while self.conversation.is_active:
+            try:
+                # Use run_in_executor to call msvcrt functions without blocking the event loop
+                has_key = await asyncio.get_event_loop().run_in_executor(None, self._check_for_key)
+                if has_key:
+                    key = await asyncio.get_event_loop().run_in_executor(None, self._get_key)
+                    key = key.lower()
+                    
+                    if key == b'p' or key == 'p':  # Handle both bytes and string
+                        if self.conversation.is_paused:
+                            self.conversation.resume()
+                        else:
+                            self.conversation.pause()
+                    elif key == b's' or key == 's':  # Handle both bytes and string
+                        self.conversation.stop()
+                        console.print("[red]Stopping conversation...[/red]")
+                        return
+            except Exception:
+                # If msvcrt is not available, continue with brief sleep
+                pass
+                
+            # Small delay to prevent excessive CPU usage
+            await asyncio.sleep(0.1)
+    
     async def run_conversation(self):
-        """Run the main conversation"""
+        """Run the main conversation with interactive controls"""
         try:
-            await self.conversation.start(self.grok_api)
+            # Start conversation and command listener as concurrent tasks
+            conversation_task = asyncio.create_task(self.conversation.start(self.grok_api))
+            command_task = asyncio.create_task(self._listen_for_commands())
             
-            # Keep the conversation running until manually stopped
-            console.print("\n[dim]Conversation is running. Press Ctrl+C to stop.[/dim]")
-            while self.conversation.is_active:
-                await asyncio.sleep(1)
+            # Display instructions
+            console.print("\n[dim]Conversation is running. Press 'p' to pause/resume, 's' to stop.[/dim]\n")
+            
+            # Wait for either task to complete
+            done, pending = await asyncio.wait(
+                [conversation_task, command_task],
+                return_when=asyncio.FIRST_COMPLETED
+            )
+            
+            # Cancel any pending tasks
+            for task in pending:
+                task.cancel()
+                try:
+                    await task
+                except asyncio.CancelledError:
+                    pass
+                    
+            # Wait for conversation task to complete if it's still running
+            if not conversation_task.done():
+                await conversation_task
                 
         except KeyboardInterrupt:
             console.print("\n[yellow]Conversation interrupted by user.[/yellow]")
@@ -203,6 +247,22 @@ Choose your characters, set the scene, and watch them interact in real-time!
         except Exception as e:
             console.print(f"[red]Error exporting conversation: {e}[/red]")
     
+    def _check_for_key(self):
+        """Check if a key has been pressed (non-blocking)"""
+        try:
+            import msvcrt
+            return msvcrt.kbhit()
+        except ImportError:
+            return False
+
+    def _get_key(self):
+        """Get the pressed key"""
+        try:
+            import msvcrt
+            return msvcrt.getch()
+        except ImportError:
+            return ''
+            
     async def main(self):
         """Main application loop"""
         self.display_welcome()
