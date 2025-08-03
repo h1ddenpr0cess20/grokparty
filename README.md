@@ -6,8 +6,8 @@ GrokParty is a Python application that creates dynamic conversations between AI 
 
 ## Features
 
-- **Multiple AI Characters**: Create 2-4 unique characters with different personalities
-- **Grok-Powered**: Uses all available Grok models (Grok 2, Grok 3, Grok 3 Mini, etc.)
+- **Multiple AI Characters**: Create unlimited unique characters with different personalities
+- **Grok-Powered**: Uses all available Grok models (Grok 4, Grok 3, Grok 3 Mini, etc.)
 - **Rich Terminal UI**: Beautiful terminal interface with colors, panels, and markdown
 - **Dynamic Conversations**: AI-driven speaker selection for natural conversation flow
 - **Multiple Conversation Types**: Debates, meetings, brainstorming, therapy sessions, and more
@@ -41,7 +41,7 @@ python main.py
 2. **Choose Conversation Type**: Select from 8 different conversation styles
 3. **Set Topic & Setting**: Define what they'll discuss and where
 4. **Select Decision Model**: Choose which Grok model decides who speaks next
-5. **Create Characters**: Add 2-4 characters with unique personalities and models
+5. **Create Characters**: Add 2 or more characters with unique personalities and models
 6. **Watch the Conversation**: Sit back and enjoy the AI interaction!
 
 ### Conversation Types
