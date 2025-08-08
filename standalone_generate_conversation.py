@@ -59,10 +59,9 @@ class GrokAPI:
 class Character:
     """Represents an AI character with personality and model"""
 
-    def __init__(self, personality: str, model: str, color: str):
+    def __init__(self, personality: str, model: str):
         self.personality = personality
         self.model = model
-        self.color = color
 
     def create_prompt(
         self,
@@ -162,7 +161,6 @@ async def generate_conversation(
 
 
     Args:
-        api_key: Grok API key.
         model: Model to use for all characters and decision making.
         characters: List of character personality descriptions.
         conversation_type: Type of conversation (e.g., conversation, debate).
@@ -177,7 +175,7 @@ async def generate_conversation(
     
 
     grok_api = GrokAPI()
-    char_objs = [Character(personality=c, model=model, color="") for c in characters]
+    char_objs = [Character(personality=c, model=model) for c in characters]
 
     history: List[str] = []
     current_speaker = random.choice(char_objs)
