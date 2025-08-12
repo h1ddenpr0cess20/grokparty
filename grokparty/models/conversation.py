@@ -12,10 +12,11 @@ console = Console(width=120, highlight=False)
 class Conversation:
     """Manages the conversation flow"""
     
-    def __init__(self, conversation_type: str, topic: str, setting: str, characters: List[Character], decision_model: str):
+    def __init__(self, conversation_type: str, topic: str, setting: str, characters: List[Character], decision_model: str, mood: str = "friendly"):
         self.conversation_type = conversation_type
         self.topic = topic
         self.setting = setting
+        self.mood = mood
         self.characters = characters
         self.decision_model = decision_model
         self.history = []
@@ -78,7 +79,7 @@ class Conversation:
         intro = f"start a {self.conversation_type} about {self.topic} with {', '.join(other_participants)}. the setting is {self.setting}."
         
         with console.status(f"[{self.current_speaker.color}]{self.current_speaker.personality}[/{self.current_speaker.color}] is thinking..."):
-            message = await self.current_speaker.respond(grok_api, intro, self.conversation_type, self.topic, self.setting)
+            message = await self.current_speaker.respond(grok_api, intro, self.conversation_type, self.topic, self.setting, self.mood)
         
         self.history.append(f"{self.current_speaker.personality}: {message}")
         self._display_message(self.current_speaker, message)
@@ -106,7 +107,7 @@ class Conversation:
                 
                 history_string = "\n".join(self.history)
                 with console.status(f"[{next_speaker.color}]{next_speaker.personality}[/{next_speaker.color}] is thinking..."):
-                    message = await next_speaker.respond(grok_api, history_string, self.conversation_type, self.topic, self.setting)
+                    message = await next_speaker.respond(grok_api, history_string, self.conversation_type, self.topic, self.setting, self.mood)
                 
                 self.current_speaker = next_speaker
                 
@@ -119,9 +120,10 @@ class Conversation:
     def _display_conversation_info(self):
         """Display conversation information"""
         info_table = Table(show_header=False, box=None, padding=(0, 1))
-        info_table.add_row("Type:", self.conversation_type.title())
+        info_table.add_row("Type:", self.conversation_type)
         info_table.add_row("Topic:", self.topic)
         info_table.add_row("Setting:", self.setting)
+        info_table.add_row("Mood:", self.mood)
         
         participants_text = Text()
         for i, character in enumerate(self.characters):

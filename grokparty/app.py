@@ -60,7 +60,7 @@ Choose your characters, set the scene, and watch them interact in real-time!
         
         console.print("[bold]Select conversation type:[/bold]")
         for i, conv_type in enumerate(types, 1):
-            console.print(f"  {i}. {conv_type.title()}")
+            console.print(f"  {i}. {conv_type}")
         
         while True:
             try:
@@ -72,11 +72,12 @@ Choose your characters, set the scene, and watch them interact in real-time!
             except ValueError:
                 console.print("[red]Please enter a valid number.[/red]")
     
-    def get_topic_and_setting(self) -> tuple:
-        """Get conversation topic and setting"""
+    def get_topic_setting_and_mood(self) -> tuple:
+        """Get conversation topic, setting, and mood"""
         topic = Prompt.ask("What should they talk about?", default="anything")
         setting = Prompt.ask("Where is this conversation taking place?", default="anywhere")
-        return topic, setting
+        mood = Prompt.ask("What mood should the conversation have?", default="friendly")
+        return topic, setting, mood
     
     def select_models(self) -> str:
         """Select models for characters and decision making"""
@@ -221,6 +222,7 @@ Choose your characters, set the scene, and watch them interact in real-time!
             "type": self.conversation.conversation_type,
             "topic": self.conversation.topic,
             "setting": self.conversation.setting,
+            "mood": self.conversation.mood,
             "participants": [c.personality for c in self.conversation.characters],
             "messages": []
         }
@@ -270,13 +272,13 @@ Choose your characters, set the scene, and watch them interact in real-time!
         while True:
             # Get conversation parameters
             conversation_type = self.select_conversation_type()
-            topic, setting = self.get_topic_and_setting()
+            topic, setting, mood = self.get_topic_setting_and_mood()
             decision_model = self.select_models()
             characters = self.create_characters(decision_model)
             
             # Create conversation
             self.conversation = Conversation(
-                conversation_type, topic, setting, characters, decision_model
+                conversation_type, topic, setting, characters, decision_model, mood
             )
             
             console.print("\n[bold green]Starting conversation...[/bold green]")
