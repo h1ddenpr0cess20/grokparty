@@ -9,8 +9,9 @@ class Character:
         self.personality = personality
         self.model = model
         self.color = color
+       
     
-    def create_prompt(self, history: str, conversation_type: str, topic: str, setting: str) -> List[Dict]:
+    def create_prompt(self, history: str, conversation_type: str, topic: str, setting: str, mood: str) -> List[Dict]:
         """Create the prompt for this character"""
         return [
             {
@@ -28,6 +29,7 @@ class Character:
                 "content": f"""
                 You're the next speaker in a {conversation_type} about {topic}.
                 The setting is {setting}.
+                The mood is {mood}
                 Here are the last few messages:
 
                 {history}
@@ -38,7 +40,7 @@ class Character:
             }
         ]
     
-    async def respond(self, grok_api: GrokAPI, history: str, conversation_type: str, topic: str, setting: str) -> str:
+    async def respond(self, grok_api: GrokAPI, history: str, conversation_type: str, topic: str, setting: str, mood: str) -> str:
         """Generate a response from this character"""
-        messages = self.create_prompt(history, conversation_type, topic, setting)
+        messages = self.create_prompt(history, conversation_type, topic, setting, mood)
         return await grok_api.send_request(self.model, messages, disable_search=False)

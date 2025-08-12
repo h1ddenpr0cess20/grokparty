@@ -52,6 +52,7 @@ async def generate_conversation(
     topic: str,
     setting: str,
     turns: int,
+    mood: str = "friendly",
 ) -> Dict[str, object]:
     """Generate a conversation between characters.
 
@@ -63,6 +64,7 @@ async def generate_conversation(
         topic: Conversation topic.
         setting: Conversation setting.
         turns: Number of turns to generate.
+        mood: Conversation mood.
 
     Returns:
         A dictionary representing the conversation with messages.
@@ -79,7 +81,7 @@ async def generate_conversation(
         f" the setting is {setting}."
     )
     message = await current_speaker.respond(
-        grok_api, intro, conversation_type, topic, setting
+        grok_api, intro, conversation_type, topic, setting, mood
     )
     history.append(f"{current_speaker.personality}: {message}")
 
@@ -89,7 +91,7 @@ async def generate_conversation(
         )
         history_string = "\n".join(history)
         msg = await next_speaker.respond(
-            grok_api, history_string, conversation_type, topic, setting
+            grok_api, history_string, conversation_type, topic, setting, mood
         )
         history.append(f"{next_speaker.personality}: {msg}")
         current_speaker = next_speaker
@@ -98,6 +100,7 @@ async def generate_conversation(
         "type": conversation_type,
         "topic": topic,
         "setting": setting,
+        "mood": mood,
         "participants": [c.personality for c in char_objs],
         "messages": [],
     }
