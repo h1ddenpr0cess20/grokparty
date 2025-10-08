@@ -69,7 +69,6 @@ class Character:
         conversation_type: str,
         topic: str,
         setting: str,
-        mood: str,
     ) -> List[Dict]:
         """Create the prompt for this character"""
         return [
@@ -88,7 +87,6 @@ Do not preface them with your name.
                 "content": f"""
 You're the next speaker in a {conversation_type} about {topic}.
 The setting is {setting}.
-The mood is {mood}.
 Here are the last few messages:
 
 {history}
@@ -106,10 +104,9 @@ Here are the last few messages:
         conversation_type: str,
         topic: str,
         setting: str,
-        mood: str,
     ) -> str:
         """Generate a response from this character"""
-        messages = self.create_prompt(history, conversation_type, topic, setting, mood)
+        messages = self.create_prompt(history, conversation_type, topic, setting)
         return await grok_api.send_request(self.model, messages, disable_search=False)
 
 
@@ -158,7 +155,6 @@ async def generate_conversation(
     conversation_type: str = "conversation",
     topic: str = "anything",
     setting: str = "anywhere",
-    mood: str = "friendly",
     turns: int = 10,
 ) -> Dict[str, object]:
     """Generate a conversation between characters.
@@ -170,7 +166,6 @@ async def generate_conversation(
         conversation_type: Type of conversation (e.g., conversation, debate).
         topic: Conversation topic.
         setting: Conversation setting.
-        mood: Conversation mood.
         turns: Number of turns to generate.
 
     Returns:
@@ -190,7 +185,7 @@ async def generate_conversation(
         f" the setting is {setting}."
     )
     message = await current_speaker.respond(
-        grok_api, intro, conversation_type, topic, setting, mood
+        grok_api, intro, conversation_type, topic, setting
     )
     history.append(f"{current_speaker.personality}: {message}")
 
@@ -205,7 +200,7 @@ async def generate_conversation(
         )
         history_string = "\n".join(history)
         msg = await next_speaker.respond(
-            grok_api, history_string, conversation_type, topic, setting, mood
+            grok_api, history_string, conversation_type, topic, setting
         )
         history.append(f"{next_speaker.personality}: {msg}")
         current_speaker = next_speaker
@@ -214,7 +209,6 @@ async def generate_conversation(
         "type": conversation_type,
         "topic": topic,
         "setting": setting,
-        "mood": mood,
         "participants": [c.personality for c in char_objs],
         "messages": [],
     }
